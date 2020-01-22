@@ -47,9 +47,10 @@ int coPrimo(int phi){
 }
 
 int main(void){
-	int p1, p2, n, phi, e, i;
-	char linha[50], c;
-	FILE *arquivo;
+	int p1, p2, n, phi, e, i, contador;
+	char linha[50], c, linha2[50];
+	FILE *arquivo, *arq;
+	/*
 	printf("Você precisa realizar a inserção de dois números primos:\n");
 	
 	printf("Insira o primeiro número primo!\n");
@@ -74,18 +75,37 @@ int main(void){
 		if(verificaPrimo(p2))
 			break;
 	}
-
+	*/
 	arquivo = fopen("conjunto.txt", "r");
 	while(fgets(linha, sizeof(linha), arquivo) != NULL){
-		printf("%s\n", linha);
+		contador = 0;
+		//Verifica o tamanho da string antes da quebra de linha (\n)
+		for(i = 0; i < sizeof(linha); i++){
+			if(linha[i] == 10)
+				break;
+			contador++;
+		}
+
+		//Criando uma string com o exato tamanho do endereço do arquivo
+		char line[contador];
+
+		//Copiando para este o endereço do arquivo em questão
+		for(i = 0; i < contador; i++)
+			line[i] = linha[i];
+		
+		printf("%s", line);
+		arq = fopen(line, "r");
+		//if(arq == NULL){
+		//	printf("Erro\n");
+		//}
+
 	}
 
 	fclose(arquivo);
-	
 
 
-	n = p1 * p2;
-	phi = (p1-1) * (p2-1);	
-	e = coPrimo(phi);
+	//n = p1 * p2;
+	//phi = (p1-1) * (p2-1);	
+	//e = coPrimo(phi);
 	return 0;
 }
