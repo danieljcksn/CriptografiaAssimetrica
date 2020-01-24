@@ -1,9 +1,18 @@
+#include <time.h>
 #include <stdio.h>
-#include <locale.h>
-#include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
+#include <locale.h>
+#include <stdbool.h>
 
+// - - - - P R O T Ó T I P O S - - - - // 
+bool verificaPrimo(int p1);
+int mdc(int n1,int n2);
+int mdc(int n1,int n2);
+int criptografa(int n, int e, int caractere);
+
+
+//Verifica se um número dado (p1) é primo ou não.
 bool verificaPrimo(int p1){
 	int i;
 
@@ -15,6 +24,8 @@ bool verificaPrimo(int p1){
 	return true;
 }
 
+
+//Calcula o MDC entre dois números (n1 e n2).
 int mdc(int n1,int n2){
     if(n1>n2){  // Condições para se calcular o MDC usando o algoritmo de Euclides
 	    if(n1%n2!=0){
@@ -32,25 +43,39 @@ int mdc(int n1,int n2){
 }
 
 
+//Encontra o valor de 'e'. 'e' deve ser co-primo em relação a Phi(n) e também 1 < e < Phi(n)
 int coPrimo(int phi){
 	int n, result;
-	n = rand() % phi;
+	/*
+	srand(time(NULL)) objetiva inicializar o gerador de números aleatórios
+	com o valor da função time(NULL). Este por sua vez, é calculado
+	como sendo o total de segundos passados desde 1 de janeiro de 1970
+	até a data atual.
+	Desta forma, a cada execução o valor da "semente" será diferente.
+	*/
+	srand(time(NULL));
+
+	n = rand() % (phi-1);
 	result = mdc(phi, n);
 
 	while(result != 1){
 		n = rand() % phi;
 		result = mdc(phi, n);
-		printf("%d", n);
 	}
-	printf("%d", n);
 	return n;
-
 }
 
+//A partir de uma chave pública, composta por 'n' e 'e', realiza a criptografia.
+//int criptografa(int n, int e, int caractere){
+
+//	return 
+//}
+
+// - - - - M A I N - - - - - // 
 int main(void){
 	int p1, p2, n, phi, e, i, contador, iteracoes = 0;
-	char linha[50], c, linha2[50];
-	FILE *arquivo, *arq;
+	char linha[50], c, linha2[50], nomeSaida[5] = "1.txt";
+	FILE *arquivo, *arq, saida;
 
 	printf("Você precisa realizar a inserção de dois números primos:\n");
 	
@@ -80,6 +105,19 @@ int main(void){
 	//Limpando a tela
 	printf("\e[H\e[2J");
 
+	//Calculando 'n'
+	n = p1 * p2;
+
+	/* A função Phi(n) retorna a quantidade de números inferiores ou iguais a n
+	que são Co-Primos com respeito a ele. Phi(n) = Phi(p1) * Phi(p2)
+	Como p1 e p2 são primos, phi é (p1 - 1) * (p2 - 1) */
+
+	phi = (p1-1) * (p2-1);	
+
+	/* Definindo um número aleatório 'e'. Deve satisfazer as condições: ser maior que 1 e menor que Phi(n), também deve ser primo entre Phi(n).
+	Ou seja, mdc(phi(n), e) deve ser 1, para 1 < e < Phi(n). */
+
+	e = coPrimo(phi);
 
 	arquivo = fopen("conjunto.txt", "r");
 	while(fgets(linha, sizeof(linha), arquivo) != NULL){
@@ -94,7 +132,7 @@ int main(void){
 			}
 		}
 
-		//Criando uma string com o exato tamanho do endereço do arquivo
+		//Criando uma string com o exato tamanho do endereço do arq
 		char line[contador];
 
 		//Copia o endereço para uma variável com tamanho adequado.
@@ -109,20 +147,28 @@ int main(void){
 			//atribui nulo ao último caractere, eliminando-o.
 		}
 
+		//Só pra verificar se os arquivos estão sendo lidos corretamente.
+		printf("\n- - - - - - -\nArquivo [%s]\n", line);
+		//Abrindo os arquivos .txt a partir do endereço obtido.
 		arq = fopen(line, "r");
-		
-		//Verificando se o arquivo foi aberto corretamente.
+
+		//Verificando se o arq foi aberto corretamente.
 		if(arq == NULL)
 			printf("Erro na abertura de arquivo.\n");
-
-
+		else{
+			//Lendo o arquivo, caractere por caractere.
+			c = fgetc(arq);
+			while(c != EOF){
+				printf("%c", c);
+				c = fgetc(arq);
+			}
+		}
+		fclose(arq);
 	}
-
 	fclose(arquivo);
 
 
-	n = p1 * p2;
-	phi = (p1-1) * (p2-1);	
-	e = coPrimo(phi);
+	
+	//criptografa(n, e, )
 	return 0;
 }
