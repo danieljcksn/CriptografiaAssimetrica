@@ -205,6 +205,7 @@ int main(void){
 			}
 			printf("\n");
 		}
+		remove(line);
 		fclose(arq);
 	}
 	fclose(arquivo);
