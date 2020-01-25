@@ -9,12 +9,16 @@
 bool verificaPrimo(int p1);
 int mdc(int n1,int n2);
 int mdc(int n1,int n2);
+unsigned long long int potencia(int base, int expoente);
 int criptografa(int n, int e, int caractere);
 
 
 //Verifica se um número dado (p1) é primo ou não.
 bool verificaPrimo(int p1){
 	int i;
+
+	if(p1 < 1)
+		return false;
 
 	for(i = 2; i< p1; i++){
 		if(p1 % i == 0)
@@ -65,18 +69,39 @@ int coPrimo(int phi){
 	return n;
 }
 
-//A partir de uma chave pública, composta por 'n' e 'e', realiza a criptografia.
-//int criptografa(int n, int e, int caractere){
 
-//	return 
-//}
+//Função para calcular a potência, pois a função pow da biblio math.h não estava funcionando nesse caso.
+unsigned long long int potencia(int base, int expoente){
+	if(expoente == 0)
+		return 1;
+	else
+		return (base * potencia(base, expoente-1));
+}
+
+
+//A partir de uma chave pública, composta por 'n' e 'e', realiza a criptografia.
+int criptografa(int n, int e, int caractere){
+	//Capaz de armazenar um número de até 19 dígitos.
+	unsigned long long int resultadoPot;
+	int valorCriptografado;
+
+	resultadoPot = potencia(caractere, e);
+	valorCriptografado = resultadoPot % n;
+
+	return valorCriptografado; 
+}
+
 
 // - - - - M A I N - - - - - // 
 int main(void){
-	int p1, p2, n, phi, e, i, contador, iteracoes = 0;
-	char linha[50], c, linha2[50], nomeSaida[5] = "1.txt";
-	FILE *arquivo, *arq, saida;
+	int p1, p2, n, phi, e, i, contador, iteracoes = 0, codAscii = 97, valorCriptografado;
+	char linha[50], c, arqSaida[11] = "__Crip.txt";
+	FILE *arquivo, *arq, *saida, *indexSaida;
 
+	//Limpando a tela
+	printf("\e[H\e[2J");
+
+	printf("Digite o endereço dos arquivos de texto que deseja criptografar em 'conjunto.txt'! =)\n........................................................\n");
 	printf("Você precisa realizar a inserção de dois números primos:\n");
 	
 	printf("Insira o primeiro número primo!\n");
@@ -102,7 +127,6 @@ int main(void){
 			break;
 	}
 
-	//Limpando a tela
 	printf("\e[H\e[2J");
 
 	//Calculando 'n'
@@ -118,10 +142,21 @@ int main(void){
 	Ou seja, mdc(phi(n), e) deve ser 1, para 1 < e < Phi(n). */
 
 	e = coPrimo(phi);
-
+	indexSaida = fopen("conjuntoCriptografado.txt", "w");
 	arquivo = fopen("conjunto.txt", "r");
+
 	while(fgets(linha, sizeof(linha), arquivo) != NULL){
 		iteracoes++;
+
+		//Variando o nome do arquivo de saída (criptografado).
+		arqSaida[0] = codAscii;
+		codAscii++;
+
+		//Cria um conjunto com os endereços dos arquivos de saída.
+		fprintf(indexSaida, "%s", arqSaida);
+		fprintf(indexSaida, "\n");		
+
+
 		contador = 0;
 		//Verifica o tamanho da string antes da quebra de linha (\n)
 		for(i = 0; i < sizeof(linha); i++){
@@ -141,34 +176,38 @@ int main(void){
 		
 		/*Para solucionar um problema com o armazenamento do primeiro endereço (a.txt), o qual
 		trazia anteriormente consigo lixo da memória na última posição da string.*/
+		
+		//caso seja a primeira iteração, ou seja, caso seja o primeiro endereço de arquivo lido.
 		if(iteracoes == 1){
-		//caso seja a primeira iteração, ou seja, primeiro endereço lido
 			line[i] = '\0';
-			//atribui nulo ao último caractere, eliminando-o.
+			//atribui nulo ao último caractere, eliminando-o e corrigindo o problema.
 		}
 
-		//Só pra verificar se os arquivos estão sendo lidos corretamente.
-		printf("\n- - - - - - -\nArquivo [%s]\n", line);
+		//O uso de \e[1m%s\e[m é para tornar o nome do arquivo negrito.
+		printf("- - - - - -\nArquivo \e[1m%s\e[m:\n", line);
 		//Abrindo os arquivos .txt a partir do endereço obtido.
 		arq = fopen(line, "r");
-
 		//Verificando se o arq foi aberto corretamente.
 		if(arq == NULL)
 			printf("Erro na abertura de arquivo.\n");
 		else{
 			//Lendo o arquivo, caractere por caractere.
 			c = fgetc(arq);
+
+			//Cria o arquivo de saída.
+			saida = fopen(arqSaida, "w");
 			while(c != EOF){
+				valorCriptografado = criptografa(n, e, c);
+				fprintf(saida, "%d", valorCriptografado);
+				fprintf(saida, "\n");
 				printf("%c", c);
 				c = fgetc(arq);
 			}
+			printf("\n");
 		}
 		fclose(arq);
 	}
 	fclose(arquivo);
 
-
-	
-	//criptografa(n, e, )
 	return 0;
 }
