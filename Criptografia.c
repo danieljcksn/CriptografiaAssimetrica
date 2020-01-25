@@ -10,7 +10,10 @@ bool verificaPrimo(int p1);
 int mdc(int n1,int n2);
 int mdc(int n1,int n2);
 unsigned long long int potencia(int base, int expoente);
-int criptografa(int n, int e, int caractere);
+int criptografaChavePublica(int n, int e, int caractere);
+int chavePrivada(int phi, int e);
+int descriptografaChavePrivada(int valorCriptografado, int d, int n);
+
 
 
 //Verifica se um número dado (p1) é primo ou não.
@@ -80,7 +83,7 @@ unsigned long long int potencia(int base, int expoente){
 
 
 //A partir de uma chave pública, composta por 'n' e 'e', realiza a criptografia.
-int criptografa(int n, int e, int caractere){
+int criptografaChavePublica(int n, int e, int caractere){
 	//Capaz de armazenar um número de até 19 dígitos.
 	unsigned long long int resultadoPot;
 	int valorCriptografado;
@@ -92,9 +95,39 @@ int criptografa(int n, int e, int caractere){
 }
 
 
+//Determina a chave privada responsável por decifrar a mensagem.
+int chavePrivada(int phi, int e){
+	int d = 1, produto;
+	//A chave privada é chamada de D e é encontrada seguindo o algoritmo:
+	//D * E mod Phi(N) == 1
+	produto = d * e;
+	while(produto % phi != 1){
+		d++;
+		produto = d * e;
+	}
+
+	//d é a chave privada.
+	return d;
+}
+
+
+//Retorna o valor ASCII do caractere original, a partir da chave privada.
+int descriptografaChavePrivada(int valorCriptografado, int d, int n){
+	unsigned long long int resultadoPot;
+	int valorDescriptografado;
+
+	//Usaremos o D para descriptografar a Mensagem cifrada, 
+	//para cada número da mensagem, iremos elevalo por D e fazer a operação modular por N, 
+	//então teremos o valor ASCII original.
+	resultadoPot = potencia(valorCriptografado, d);
+	valorDescriptografado = resultadoPot % n;
+
+	return valorDescriptografado;
+}
+
 // - - - - M A I N - - - - - // 
 int main(void){
-	int p1, p2, n, phi, e, i, contador, iteracoes = 0, codAscii = 97, valorCriptografado;
+	int p1, p2, n, phi, e, d, i, contador, iteracoes = 0, codAscii = 97, valorCriptografado, numArqs = 0;
 	char linha[50], c, arqSaida[11] = "__Crip.txt";
 	FILE *arquivo, *arq, *saida, *indexSaida;
 
@@ -104,7 +137,7 @@ int main(void){
 	printf("Digite o endereço dos arquivos de texto que deseja criptografar em 'conjunto.txt'! =)\n........................................................\n");
 	printf("Você precisa realizar a inserção de dois números primos:\n");
 	
-	printf("Insira o primeiro número primo!\n");
+	printf("Insira o primeiro número primo: ");
 	scanf("%d", &p1);
 
 	//Garantindo que os números inseridos são números primos.
@@ -116,7 +149,7 @@ int main(void){
 			break;
 	}
 
-	printf("Insira o segundo número primo!\n");
+	printf("Insira o segundo número primo: ");
 	scanf("%d", &p2);
 
 	while(!verificaPrimo(p2)){
@@ -142,11 +175,16 @@ int main(void){
 	Ou seja, mdc(phi(n), e) deve ser 1, para 1 < e < Phi(n). */
 
 	e = coPrimo(phi);
+
+	printf("Sua chave pública é [%d, %d]\n", n, e);
 	indexSaida = fopen("conjuntoCriptografado.txt", "w");
 	arquivo = fopen("conjunto.txt", "r");
 
+
+	printf("\n........ Conteúdo dos Arquivos ........\n");
 	while(fgets(linha, sizeof(linha), arquivo) != NULL){
 		iteracoes++;
+		numArqs++;
 
 		//Variando o nome do arquivo de saída (criptografado).
 		arqSaida[0] = codAscii;
@@ -197,7 +235,7 @@ int main(void){
 			//Cria o arquivo de saída.
 			saida = fopen(arqSaida, "w");
 			while(c != EOF){
-				valorCriptografado = criptografa(n, e, c);
+				valorCriptografado = criptografaChavePublica(n, e, c);
 				fprintf(saida, "%d", valorCriptografado);
 				fprintf(saida, "\n");
 				printf("%c", c);
@@ -209,6 +247,13 @@ int main(void){
 		fclose(arq);
 	}
 	fclose(arquivo);
+	printf("\n.......................................\nCriptografia realizada com sucesso.\n\n");
+
+	codAscii = 97;
+	arqSaida[0] = codAscii;
+
+	d = chavePrivada(phi, e);
+	//descriptografaChavePrivada(valorCriptografado, d, n);
 
 	return 0;
 }
