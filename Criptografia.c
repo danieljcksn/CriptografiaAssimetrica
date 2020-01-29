@@ -1,3 +1,10 @@
+/* 
+Trabalho feito por Breno Vitório, Daniel Jackson e Leonardo Damasceno, para a disciplina
+de ORI (Organização e Recuperação da Informação), ministrada pelo professor Elinaldo Júnior.
+*/
+
+
+
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
@@ -52,7 +59,7 @@ int mdc(int n1,int n2){
 
 //Encontra o valor de 'e'. 'e' deve ser co-primo em relação a Phi(n) e também 1 < e < Phi(n)
 int coPrimo(int phi){
-	int n, result;
+	int e, result;
 	/*
 	srand(time(NULL)) objetiva inicializar o gerador de números aleatórios
 	com o valor da função time(NULL). Este por sua vez, é calculado
@@ -62,14 +69,14 @@ int coPrimo(int phi){
 	*/
 	srand(time(NULL));
 
-	n = rand() % (phi-1);
-	result = mdc(phi, n);
+	e = rand() % (phi-1);
+	result = mdc(phi, e);
 
-	while(result != 1){
-		n = rand() % phi;
-		result = mdc(phi, n);
+	while(result != 1 || e < 2){
+		e = rand() % (phi-1);
+		result = mdc(phi, e);
 	}
-	return n;
+	return e;
 }
 
 
@@ -87,10 +94,8 @@ int criptografaChavePublica(int n, int e, int caractere){
 	//Capaz de armazenar um número de até 19 dígitos.
 	unsigned long long int resultadoPot;
 	int valorCriptografado;
-
 	resultadoPot = potencia(caractere, e);
 	valorCriptografado = resultadoPot % n;
-
 	return valorCriptografado; 
 }
 
@@ -98,6 +103,7 @@ int criptografaChavePublica(int n, int e, int caractere){
 //Determina a chave privada responsável por decifrar a mensagem.
 int chavePrivada(int phi, int e){
 	int d = 1, produto;
+	printf("Entrou");
 	//A chave privada é chamada de D e é encontrada seguindo o algoritmo:
 	//D * E mod Phi(N) == 1
 	produto = d * e;
@@ -105,7 +111,6 @@ int chavePrivada(int phi, int e){
 		d++;
 		produto = d * e;
 	}
-
 	//d é a chave privada.
 	return d;
 }
@@ -127,8 +132,8 @@ int descriptografaChavePrivada(int valorCriptografado, int d, int n){
 
 // - - - - M A I N - - - - - // 
 int main(void){
-	int p1, p2, n, phi, e, d, i, contador, iteracoes = 0, codAscii = 97, valorCriptografado, numArqs = 0;
-	char linha[50], c, arqSaida[11] = "__Crip.txt";
+	int p1, p2, n, phi, e, d, i, contador, counter, iteracoes = 0, codAscii = 97, valorCriptografado, valorDescriptografado, numArqs = 0, escolha;
+	char linha[50], c, c1[10], arqSaida[11] = "__Crip.txt", arqOrig[15] = "__Original.txt";
 	FILE *arquivo, *arq, *saida, *indexSaida;
 
 	//Limpando a tela
@@ -242,18 +247,81 @@ int main(void){
 				c = fgetc(arq);
 			}
 			printf("\n");
+			fclose(saida);
 		}
 		remove(line);
 		fclose(arq);
 	}
 	fclose(arquivo);
-	printf("\n.......................................\nCriptografia realizada com sucesso.\n\n");
+	fclose(indexSaida);
+	printf("\n.......................................\nCriptografia realizada com sucesso. Os arquivos originais foram deletados.\n\n");
 
-	codAscii = 97;
-	arqSaida[0] = codAscii;
 
-	d = chavePrivada(phi, e);
-	//descriptografaChavePrivada(valorCriptografado, d, n);
+	printf("\nDeseja descriptografar os arquivos?\n1 - Sim\n2 - Não\nSua resposta: ");
+	scanf("%d", &escolha);
+
+	if(escolha == 1){
+
+		//Descriptografando os arquivos.
+		d = chavePrivada(phi, e);
+		printf("Sua chave privada é [%d]\n", d);
+		iteracoes = 0;
+		numArqs = 0;
+		codAscii = 97;
+		arquivo = fopen("conjuntoCriptografado.txt", "r");
+
+		while(fgets(linha, sizeof(linha), arquivo) != NULL){
+			counter = 0;
+			iteracoes++;
+			numArqs++;
+			//Garante que os nomes dos arquivos de saída serão modificados (a.txt, b.txt, c.txt, ...)
+			arqOrig[0] = codAscii;
+			codAscii++;
+			
+
+			//Abrindo o arquivo no qual serão salvos os caracteres originais.
+			saida = fopen(arqOrig, "w");
+
+			//Verifica o tamanho da string antes da quebra de linha (\n)
+			for(i = 0; i < sizeof(linha); i++){
+				counter++;
+				if(linha[i] == 10){
+					counter -= 1;
+					break;
+				}
+			}		
+
+			//Foi necessário definir o tamanho como 11, pois colocando um contador erros estavam ocorrendo.
+			char line[11];
+
+			for(i = 0; i < counter; i++)
+				line[i] = linha[i];		
+
+			if(iteracoes == 1){
+				line[i] = '\0';
+				//atribui nulo ao último caractere, eliminando-o e corrigindo o problema.
+			}
+
+			arq = fopen(line, "r");
+			//Verificando se o arq foi aberto corretamente.
+			if(arq == NULL)
+				printf("Erro na abertura de arquivo.\n");
+			else{
+				while(fgets(c1, sizeof(c1), arq) != NULL){
+					//Convertendo a 'string' do arquivo em um número, para que seja possível realizar as operações.
+					valorCriptografado = atoi(c1);
+					valorDescriptografado = descriptografaChavePrivada(valorCriptografado, d, n);
+					fprintf(saida, "%c", valorDescriptografado);
+				}
+				printf("\n");
+			}
+			printf("Valores:\nD = %d\nE = %d\nPhi(n) = %d\nN = %d\n", d, e, phi, n);
+			//remove(line);
+			fclose(arq);
+		}
+		fclose(arquivo);
+		printf("\nOs arquivos foram descriptografados! =)\n");
+	}
 
 	return 0;
 }
